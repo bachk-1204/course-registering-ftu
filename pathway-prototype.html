@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathway — Fair Course Registration · Interactive Prototype</title>
+<style>
+:root{
+  /* FTU red theme — primary red, secondary white */
+  --green-900:#5c0d11; --green-700:#9b1b1e; --green-600:#b51f24; --green-500:#c62828;
+  --green-300:#e89393; --green-100:#f8dada; --mint:#fcecec;
+  --amber:#c98a2b; --amber-bg:#f7ecd6; --red:#b5463f; --red-bg:#f6e0de;
+  --cream:#fbf6f5; --ink:#241718; --muted:#7a5f60; --line:#ecdada; --white:#fff;
+  --shadow:0 18px 50px rgba(92,13,17,.20);
+  --font:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:linear-gradient(160deg,#fbeaea,#f6efef 60%,#fdf4f4);font-family:var(--font);color:var(--ink);min-height:100%}
+.wrap{max-width:1200px;margin:0 auto;padding:28px 22px 60px}
+.masthead{text-align:center;margin-bottom:22px}
+.masthead .pill{display:inline-flex;gap:8px;align-items:center;background:var(--green-700);color:#fff;font-size:12px;font-weight:600;letter-spacing:.4px;padding:6px 14px;border-radius:999px}
+.masthead h1{font-size:30px;color:var(--green-900);margin:12px 0 6px;letter-spacing:-.5px}
+.masthead p{color:var(--muted);max-width:640px;margin:0 auto;font-size:15px;line-height:1.5}
+
+/* layout */
+.stage{display:flex;justify-content:center;margin-top:26px}
+
+/* flow map */
+.flowmap{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 8px 24px rgba(23,53,36,.07);width:100%;position:sticky;top:18px}
+.flowmap h3{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--green-600);margin-bottom:12px}
+.flowmap button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:transparent;border:none;border-radius:10px;padding:9px 10px;cursor:pointer;font-family:inherit;font-size:13.5px;color:var(--ink);transition:.15s}
+.flowmap button:hover{background:var(--mint)}
+.flowmap button.active{background:var(--green-700);color:#fff}
+.flowmap button .n{flex:none;width:22px;height:22px;border-radius:50%;background:var(--green-100);color:var(--green-700);font-size:11px;font-weight:700;display:grid;place-items:center}
+.flowmap button.active .n{background:#fff;color:var(--green-700)}
+.flowmap .grp{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:12px 4px 4px}
+
+/* phone */
+.phone-col{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%}
+.phone{width:340px;max-width:92vw;height:710px;background:#0d1a12;border-radius:42px;padding:13px;box-shadow:var(--shadow);position:relative;flex:none}
+.notch{position:absolute;top:13px;left:50%;transform:translateX(-50%);width:130px;height:26px;background:#0d1a12;border-radius:0 0 16px 16px;z-index:30}
+.screenport{background:var(--cream);border-radius:31px;height:100%;overflow:hidden;position:relative}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;animation:fade .25s ease}
+.screen.show{display:flex}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.body::-webkit-scrollbar{width:0}
+
+/* status bar */
+.statusbar{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 22px 0 24px;font-size:12px;font-weight:600;color:var(--ink);flex:none}
+.statusbar .dots{display:flex;gap:4px;align-items:center}
+.statusbar .dots span{width:5px;height:5px;border-radius:50%;background:var(--ink)}
+
+/* app header */
+.apphdr{padding:6px 20px 14px;display:flex;align-items:center;justify-content:space-between}
+.apphdr .ttl{font-size:19px;font-weight:700;color:var(--green-900);letter-spacing:-.3px}
+.apphdr .sub{font-size:12px;color:var(--muted)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--green-300);display:grid;place-items:center;color:var(--green-900);font-weight:700;font-size:14px}
+
+.pad{padding:0 20px 18px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:13px}
+.card.flat{box-shadow:none}
+.row{display:flex;align-items:center;gap:11px}
+.between{justify-content:space-between}
+.tag{font-size:10.5px;font-weight:700;letter-spacing:.4px;padding:3px 9px;border-radius:999px}
+.tag.open{background:var(--green-100);color:var(--green-700)}
+.tag.full{background:var(--red-bg);color:var(--red)}
+.tag.guar{background:#e6eefb;color:#33508c}
+.tag.match{background:var(--amber-bg);color:var(--amber)}
+.tag.req{background:var(--green-700);color:#fff}
+.btn{display:block;width:100%;text-align:center;background:var(--green-700);color:#fff;border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:.15s}
+.btn:hover{background:var(--green-900)}
+.btn.alt{background:#fff;color:var(--green-700);border:1.5px solid var(--green-300)}
+.btn.amber{background:var(--amber)}
+.btn.sm{padding:9px;font-size:12.5px;width:auto;border-radius:10px}
+.muted{color:var(--muted);font-size:12.5px;line-height:1.5}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--green-600);font-weight:700;margin:4px 0 8px}
+.big{font-size:23px;font-weight:700;color:var(--green-900)}
+h4.cn{font-size:15px;margin-bottom:3px;color:var(--ink)}
+
+/* progress ring */
+.ring-wrap{display:flex;align-items:center;gap:16px}
+.ring{position:relative;width:92px;height:92px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .pct{position:absolute;inset:0;display:grid;place-items:center;font-size:20px;font-weight:700;color:var(--green-900)}
+.bar{height:8px;background:var(--green-100);border-radius:6px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--green-500);border-radius:6px}
+
+/* fairness explainer */
+.fair{background:var(--mint);border:1px dashed var(--green-300);border-radius:14px;padding:13px}
+.fair .ic{font-size:18px}
+.window{background:var(--green-900);color:#fff;border-radius:16px;padding:15px}
+.window .t{font-size:11px;letter-spacing:.5px;opacity:.8;text-transform:uppercase}
+.window .clock{font-size:26px;font-weight:700;margin:2px 0 4px;letter-spacing:1px}
+
+/* preference list */
+.pref{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:9px}
+.pref .rank{width:26px;height:26px;border-radius:8px;background:var(--green-700);color:#fff;font-weight:700;font-size:13px;display:grid;place-items:center;flex:none}
+.pref .ar{margin-left:auto;display:flex;flex-direction:column;gap:2px;color:var(--green-500);font-size:11px}
+
+/* bottom nav */
+.botnav{flex:none;height:62px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding-bottom:4px}
+.botnav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit;flex:1}
+.botnav button.on{color:var(--green-700);font-weight:700}
+.botnav .gi{font-size:19px;line-height:1}
+
+/* annotation panel */
+.notes{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 8px 24px rgba(23,53,36,.07);width:100%;align-self:stretch}
+.notes .kch{display:inline-block;background:var(--green-100);color:var(--green-700);font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;letter-spacing:.4px;text-transform:uppercase}
+.notes h2{font-size:21px;color:var(--green-900);margin:12px 0 8px}
+.notes .role{font-size:13px;color:var(--muted);margin-bottom:14px}
+.notes h5{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--green-600);margin:16px 0 7px}
+.notes p{font-size:14px;line-height:1.6;color:#34423a;margin-bottom:9px}
+.notes ul{margin:0 0 6px 2px;list-style:none}
+.notes li{font-size:13.5px;line-height:1.55;color:#34423a;padding-left:20px;position:relative;margin-bottom:6px}
+.notes li::before{content:'';position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:2px;background:var(--green-500)}
+.solves{background:var(--mint);border-left:4px solid var(--green-500);border-radius:0 10px 10px 0;padding:11px 13px;font-size:13px;line-height:1.5;color:var(--green-900)}
+.solves b{color:var(--green-700)}
+.navbtns{display:flex;gap:10px;margin-top:18px}
+.navbtns button{flex:1;padding:11px;border-radius:11px;border:1.5px solid var(--green-300);background:#fff;color:var(--green-700);font-weight:600;font-size:13px;cursor:pointer;font-family:inherit}
+.navbtns button.prim{background:var(--green-700);color:#fff;border-color:var(--green-700)}
+.hint{text-align:center;font-size:12px;color:var(--muted);margin-top:8px}
+.tapnote{font-size:11px;color:var(--green-600);background:var(--green-100);display:inline-block;padding:3px 9px;border-radius:8px;margin-top:2px}
+a.scrim{color:var(--green-600);text-decoration:none;font-weight:600}
+/* demand score + ratings */
+.srow{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.srow .sl{flex:1}
+.srow .sl .nm{font-size:12.5px;font-weight:600;color:var(--ink)}
+.srow .sl .ds{font-size:10.5px;color:var(--muted)}
+.srow .sb{height:7px;background:var(--green-100);border-radius:5px;overflow:hidden;margin-top:5px}
+.srow .sb i{display:block;height:100%;background:var(--green-500);border-radius:5px}
+.srow .sp{font-weight:800;color:var(--green-700);font-size:13px;min-width:54px;text-align:right}
+.stars{letter-spacing:2px;font-size:13px;color:var(--amber)}
+.dots5{display:flex;gap:4px;align-items:center}
+.dots5 i{width:13px;height:13px;border-radius:50%;background:var(--green-100);display:inline-block}
+.dots5 i.on{background:var(--amber)}
+.review{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:9px}
+.review .rh{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.link{color:var(--green-700);font-weight:700;font-size:12.5px;cursor:pointer}
+.phase{display:flex;gap:12px;margin-bottom:2px}
+.phase .pn{flex:none;display:flex;flex-direction:column;align-items:center}
+.phase .pn .b{width:28px;height:28px;border-radius:50%;background:var(--green-700);color:#fff;font-weight:700;font-size:13px;display:grid;place-items:center}
+.phase .pn .ln{flex:1;width:2px;background:var(--green-100);margin:3px 0}
+.phase .pc{padding-bottom:16px}
+.phase .pc h4{font-size:14px;margin-bottom:2px;color:var(--green-900)}
+.ar2{display:flex;flex-direction:column;gap:2px;margin-left:auto}
+.ar2 span{cursor:pointer;color:var(--green-500);font-size:14px;line-height:1;padding:3px 6px;border-radius:6px;user-select:none}
+.ar2 span:hover{background:var(--green-100);color:var(--green-700)}
+.ar2 span.dis{color:var(--line);cursor:default}
+.ar2 span.dis:hover{background:none;color:var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <span class="pill">◆ GROUP 7 · DTI PROTOTYPE</span>
+    <h1>Pathway — Fair Course Registration</h1>
+    <p>An interactive paper-prototype walkthrough. Pathway replaces the first-come-first-served race with needs-based allocation, real-time graduation safety, and goal-aligned course discovery. Tap the phone to explore the flow.</p>
+  </div>
+
+  <div class="stage">
+    <!-- PHONE -->
+    <div class="phone-col">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screenport" id="port">
+
+          <!-- 1 LOGIN -->
+          <section class="screen" data-s="login">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="body" style="display:flex;flex-direction:column;justify-content:center;padding:0 26px;text-align:center;background:linear-gradient(170deg,var(--green-900),var(--green-600))">
+              <div style="font-size:46px">🧭</div>
+              <h1 style="color:#fff;font-size:30px;margin:10px 0 4px">Pathway</h1>
+              <p style="color:#d6e9dd;font-size:14px;line-height:1.5;margin-bottom:30px">Fair course registration,<br>by design — not by luck.</p>
+              <div style="background:#fff;border-radius:16px;padding:16px;text-align:left">
+                <div class="lbl">Student ID</div>
+                <div style="border:1px solid var(--line);border-radius:10px;padding:11px;font-size:14px;color:var(--muted);margin-bottom:12px">student@uni.ac.uk</div>
+                <div class="lbl">Password</div>
+                <div style="border:1px solid var(--line);border-radius:10px;padding:11px;font-size:14px;color:var(--muted);margin-bottom:16px">••••••••</div>
+                <button class="btn" data-go="path">Sign in</button>
+              </div>
+              <p style="color:#bcdcc6;font-size:11.5px;margin-top:16px">Single sign-on with your university account</p>
+            </div>
+          </section>
+
+          <!-- 2 PATH -->
+          <section class="screen" data-s="path">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div><div class="ttl">My academic path</div><div class="sub">Step 2 of 2 · personalises everything</div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad">
+              <p class="muted" style="margin-bottom:14px">Tell Pathway your goal once. We use it to recommend courses, flag what's required, and protect your graduation.</p>
+              <div class="lbl">Chosen pathway</div>
+              <div class="card row between" style="border-color:var(--green-500);background:var(--mint)"><div class="row"><span style="font-size:20px">📊</span><div><h4 class="cn">Data &amp; Analytics</h4><div class="muted">Selected goal track</div></div></div><span class="tag open">✓ Active</span></div>
+              <div class="card row between"><div class="row"><span style="font-size:20px">🌱</span><div><h4 class="cn">Sustainability</h4></div></div><span class="muted">Add</span></div>
+              <div class="card row between"><div class="row"><span style="font-size:20px">🏛️</span><div><h4 class="cn">Public Policy</h4></div></div><span class="muted">Add</span></div>
+              <div class="fair row" style="margin:6px 0 14px"><span class="ic">🎯</span><div class="muted" style="color:var(--green-900)">Your goals shape your seat priority. Courses that move you toward graduation are weighted higher — so allocation reflects <b>need</b>, not speed.</div></div>
+              <button class="btn" data-go="home">Continue to dashboard</button>
+            </div></div>
+          </section>
+
+          <!-- 3 PROCESS -->
+          <section class="screen" data-s="process">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div><div class="ttl">How registration works</div><div class="sub">Need-based, in 5 fair steps</div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad">
+              <p class="muted" style="margin-bottom:14px">No click-race. You tell us what you need; the system allocates seats by <b>demand score</b>, not by who is fastest.</p>
+              <div class="phase"><div class="pn"><div class="b">1</div><div class="ln"></div></div><div class="pc"><h4>Submit your wishlist</h4><div class="muted">Add &amp; rank the courses you want within an open window. Order of submission never matters.</div></div></div>
+              <div class="phase"><div class="pn"><div class="b">2</div><div class="ln"></div></div><div class="pc"><h4>University sizes the classes</h4><div class="muted">The school reviews real demand and opens as many sections as resources allow, then announces each class capacity.</div></div></div>
+              <div class="phase"><div class="pn"><div class="b">3</div><div class="ln"></div></div><div class="pc"><h4>Provisional slots by demand score</h4><div class="muted">Seats are auto-assigned by each student's <b>demand score</b>. Over-capacity? You join the waitlist, ranked by that same score.</div></div></div>
+              <div class="phase"><div class="pn"><div class="b">4</div><div class="ln"></div></div><div class="pc"><h4>Confirm within 24h</h4><div class="muted">Confirm your provisional classes. If you don't confirm or you drop one, the seat passes to the next student on the waitlist.</div></div></div>
+              <div class="phase"><div class="pn"><div class="b">5</div></div><div class="pc"><h4>Cascade until the window closes</h4><div class="muted">The system keeps re-allocating freed seats by priority — automatically — until registration ends.</div></div></div>
+              <div class="fair row" style="margin-top:4px"><span class="ic">⚖️</span><div class="muted" style="color:var(--green-900)">Every step is driven by <b>need</b>, transparency, and a fair waitlist — never speed or luck.</div></div>
+              <button class="btn" style="margin-top:14px" data-go="home">Got it — continue</button>
+            </div></div>
+          </section>
+
+          <!-- 4 HOME -->
+          <section class="screen" data-s="home">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div><div class="sub">Good morning</div><div class="ttl">Kien 👋</div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad">
+              <div class="window" style="margin-bottom:13px;cursor:pointer" data-go="process">
+                <div class="t">⏱ Wishlist window — Spring 2026</div>
+                <div class="clock">Opens in 2d 04h</div>
+                <div style="font-size:12.5px;opacity:.9;line-height:1.5">No rush. Submit your ranked wishlist any time in the 48-hour window — order does <b>not</b> affect your odds. <span style="text-decoration:underline">See how it works ›</span></div>
+              </div>
+              <div class="card">
+                <div class="lbl">Graduation progress</div>
+                <div class="ring-wrap">
+                  <div class="ring"><svg width="92" height="92"><circle cx="46" cy="46" r="40" fill="none" stroke="#f8dada" stroke-width="11"/><circle cx="46" cy="46" r="40" fill="none" stroke="#c62828" stroke-width="11" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="78"/></svg><div class="pct">69%</div></div>
+                  <div style="flex:1"><div style="font-size:13px;line-height:1.5;color:#34423a"><b>3 required courses</b> left to graduate on time.</div><div class="tag guar" style="margin-top:8px;display:inline-block">2 seats guaranteed ✓</div></div>
+                </div>
+              </div>
+              <div class="card row between" data-go="register" style="cursor:pointer;border-color:var(--amber)"><div class="row"><span style="font-size:18px">🗳️</span><div><h4 class="cn">Build your wishlist</h4><div class="muted">5 courses ranked · ready to submit</div></div></div><span style="color:var(--amber);font-size:20px">›</span></div>
+              <div class="card row between" data-go="browse" style="cursor:pointer"><div class="row"><span style="font-size:18px">🔍</span><div><h4 class="cn">Recommended for your path</h4><div class="muted">4 new goal-aligned courses</div></div></div><span style="color:var(--green-500);font-size:20px">›</span></div>
+              <div class="card row between" data-go="alerts" style="cursor:pointer"><div class="row"><span style="font-size:18px">🔔</span><div><h4 class="cn">1 waitlist update</h4><div class="muted">A seat opened in Machine Learning</div></div></div><span class="tag full">New</span></div>
+            </div></div>
+            <div class="botnav" data-nav>
+              <button class="on" data-go="home"><span class="gi">⌂</span>Home</button>
+              <button data-go="browse"><span class="gi">🔍</span>Browse</button>
+              <button data-go="path"><span class="gi">🎯</span>Path</button>
+              <button data-go="grad"><span class="gi">🎓</span>Progress</button>
+              <button data-go="alerts"><span class="gi">🔔</span>Alerts</button>
+            </div>
+          </section>
+
+          <!-- 4 BROWSE -->
+          <section class="screen" data-s="browse">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div><div class="ttl">Browse courses</div><div class="sub">Spring 2026 · Data &amp; Analytics path</div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad">
+              <div class="card flat" style="background:#fff;display:flex;align-items:center;gap:8px;padding:11px 14px"><span>🔍</span><span class="muted">Search 480 courses…</span></div>
+              <div class="row" style="gap:7px;margin-bottom:12px;flex-wrap:wrap"><span class="tag req">★ Best match</span><span class="tag open">Open seats</span><span class="tag guar">Counts to degree</span></div>
+
+              <div class="card" data-course="ml" style="cursor:pointer;border-left:4px solid var(--green-500)">
+                <div class="row between"><h4 class="cn">Machine Learning Foundations</h4><span class="tag match">96% match</span></div>
+                <div class="muted">CS-3041 · 15 credits · Prof. Adeyemi</div>
+                <div class="row between" style="margin-top:8px"><span class="muted">★ 4.6 · Difficulty 3.4/5</span><span class="muted">32 seats · 27 waitlisted</span></div>
+                <div class="row between" style="margin-top:8px"><span class="tag req">Required for your degree</span><span class="link">View ›</span></div>
+              </div>
+              <div class="card" data-course="dv" style="cursor:pointer">
+                <div class="row between"><h4 class="cn">Data Visualisation &amp; Storytelling</h4><span class="tag match">91% match</span></div>
+                <div class="muted">DA-2210 · 15 credits · Dr. Lindqvist</div>
+                <div class="row between" style="margin-top:8px"><span class="muted">★ 4.8 · Difficulty 2.6/5</span><span class="muted">40 seats · 6 waitlisted</span></div>
+                <div class="row between" style="margin-top:8px"><span class="tag open">Open · seats remaining</span><span class="link">View ›</span></div>
+              </div>
+              <div class="card" data-course="ec" style="cursor:pointer">
+                <div class="row between"><h4 class="cn">Advanced Econometrics</h4><span class="tag match">88% match</span></div>
+                <div class="muted">EC-3300 · 15 credits · Dr. Faraj</div>
+                <div class="row between" style="margin-top:8px"><span class="muted">★ 4.1 · Difficulty 4.5/5</span><span class="muted">24 seats · 31 waitlisted</span></div>
+                <div class="row between" style="margin-top:8px"><span class="tag full">High demand</span><span class="link">View ›</span></div>
+              </div>
+              <div class="card" data-course="mk" style="cursor:pointer;opacity:.92">
+                <div class="row between"><h4 class="cn">Intro to Marketing</h4><span class="muted">31% match</span></div>
+                <div class="muted">MK-1100 · low relevance to your goals</div>
+                <div class="row between" style="margin-top:8px"><span class="muted">★ 4.0 · Difficulty 2.0/5</span><span class="link">View ›</span></div>
+              </div>
+            </div></div>
+            <div class="botnav" data-nav>
+              <button data-go="home"><span class="gi">⌂</span>Home</button>
+              <button class="on" data-go="browse"><span class="gi">🔍</span>Browse</button>
+              <button data-go="path"><span class="gi">🎯</span>Path</button>
+              <button data-go="grad"><span class="gi">🎓</span>Progress</button>
+              <button data-go="alerts"><span class="gi">🔔</span>Alerts</button>
+            </div>
+          </section>
+
+          <!-- 5 DETAIL -->
+          <section class="screen" data-s="detail">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div class="row" style="gap:10px"><span data-go="browse" style="cursor:pointer;font-size:20px;color:var(--green-700)">‹</span><div class="ttl">Course detail</div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad" id="detailBody"></div></div>
+          </section>
+
+          <!-- 7 DEMAND SCORE -->
+          <section class="screen" data-s="demand">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div class="row" style="gap:10px"><span data-go="detail" style="cursor:pointer;font-size:20px;color:var(--green-700)">‹</span><div><div class="ttl">Your demand score</div><div class="sub" id="demandSub">Machine Learning Foundations</div></div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad">
+              <div class="window" style="margin-bottom:13px"><div class="t">Total demand score</div><div class="clock" id="demandScore">92 / 100</div><div style="font-size:12.5px;opacity:.92">Higher score = higher seat priority. This is how Pathway decides allocation — openly.</div></div>
+              <div class="lbl">How it's calculated</div>
+              <div class="card" id="demandFactors"></div>
+              <div class="fair row" style="margin-top:4px"><span class="ic">🔍</span><div class="muted" style="color:var(--green-900)">The same five factors are applied to <b>every</b> student. Waitlist order uses this exact score — so the queue is auditable and fair.</div></div>
+              <button class="btn" style="margin-top:14px" data-go="register">Continue to wishlist</button>
+            </div></div>
+          </section>
+
+          <!-- 8 REGISTER -->
+          <section class="screen" data-s="register">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div class="row" style="gap:10px"><span data-go="home" title="Back to dashboard" style="cursor:pointer;font-size:20px;color:var(--green-700)">‹</span><div><div class="ttl">Build your wishlist</div><div class="sub">Tap ▲ ▼ to reorder · order ≠ speed</div></div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad">
+              <div class="window" style="margin-bottom:14px;background:var(--green-700)"><div class="t">⏱ Wishlist window closes in</div><div class="clock">1d 22h 10m</div><div style="font-size:12.5px;opacity:.92">Everyone who submits before close is treated equally. <b>Submit early or late — same odds.</b></div></div>
+              <div class="lbl">Your ranked wishlist</div>
+              <div id="wishlistList"></div>
+              <div class="pref" style="border-style:dashed;opacity:.8"><span class="rank" style="background:var(--green-100);color:var(--green-700)">★</span><div style="flex:1"><h4 class="cn" style="font-size:14px;color:var(--muted)">Backup: Database Systems</h4><div class="muted">Safety choice · odds: Very high</div></div></div>
+              <div class="fair row" style="margin:6px 0 14px"><span class="ic">🛡️</span><div class="muted" style="color:var(--green-900)">Add a <b>backup</b> and Pathway guarantees you won't be left with zero courses — directly protecting your graduation timeline.</div></div>
+              <button class="btn" data-go="result">Submit wishlist</button>
+              <button class="btn alt" style="margin-top:9px" data-go="home">Save &amp; back to dashboard</button>
+              <p class="hint" style="color:var(--muted)">You can edit any time before the window closes</p>
+            </div></div>
+          </section>
+
+          <!-- 9 RESULT (PROVISIONAL) -->
+          <section class="screen" data-s="result">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div><div class="ttl">Provisional allocation</div><div class="sub">Assigned by demand score</div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad">
+              <div class="window" style="margin-bottom:13px;background:var(--amber)"><div class="t">⏱ Confirm within</div><div class="clock">23h 41m</div><div style="font-size:12.5px;opacity:.95">Confirm to lock your seats. Anything you don't confirm is released to the waitlist — fairly, by score.</div></div>
+              <div class="lbl">Provisionally assigned to you</div>
+              <div class="card row between"><div><h4 class="cn">Machine Learning Foundations</h4><div class="muted">Demand score 92 · Required</div></div><span class="tag open">Slot held</span></div>
+              <div class="card row between"><div><h4 class="cn">Data Visualisation</h4><div class="muted">Demand score 71 · Aligned</div></div><span class="tag open">Slot held</span></div>
+              <div class="lbl">On the waitlist</div>
+              <div class="card row between" style="border-color:var(--amber)"><div><h4 class="cn">Advanced Econometrics</h4><div class="muted">Waitlist #2 of 31 · by demand score</div></div><span class="tag match">Waiting</span></div>
+              <div class="fair row" style="margin:4px 0 14px"><span class="ic">🔁</span><div class="muted" style="color:var(--green-900)">If a held seat is dropped or unconfirmed, the system <b>auto-cascades</b> it to the next student by score — and pulls you up your own waitlists the same way.</div></div>
+              <button class="btn" data-go="confirm">Confirm my classes</button>
+              <button class="btn alt" style="margin-top:9px" data-go="register">Edit wishlist</button>
+            </div></div>
+          </section>
+
+          <!-- 10 CONFIRM -->
+          <section class="screen" data-s="confirm">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="body" style="display:flex;flex-direction:column;justify-content:center;padding:0 24px;text-align:center;background:linear-gradient(170deg,var(--green-600),var(--green-900))">
+              <div style="font-size:50px">✅</div>
+              <h1 style="color:#fff;font-size:25px;margin:10px 0 6px">Classes confirmed</h1>
+              <p style="color:#d6e9dd;font-size:13.5px;margin-bottom:18px">Locked in — decided by need, not speed.</p>
+              <div style="background:#fff;border-radius:16px;padding:16px;text-align:left">
+                <div class="row between" style="margin-bottom:10px"><div><h4 class="cn">Machine Learning Foundations</h4><div class="muted">Required · confirmed</div></div><span class="tag open">Enrolled</span></div>
+                <div class="row between"><div><h4 class="cn">Data Visualisation</h4><div class="muted">Aligned · confirmed</div></div><span class="tag open">Enrolled</span></div>
+              </div>
+              <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:11px;margin-top:14px;color:#eaf5ee;font-size:12.5px;line-height:1.5">🎓 Your on-time graduation stays <b>on track</b>. We'll auto-claim your <b>Econometrics</b> waitlist seat by score if one frees up — no need to watch.</div>
+              <button class="btn" style="margin-top:16px;background:#fff;color:var(--green-700)" data-go="grad">See graduation tracker</button>
+            </div>
+          </section>
+
+          <!-- 11 GRAD -->
+          <section class="screen" data-s="grad">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div><div class="ttl">Graduation tracker</div><div class="sub">BSc Data Science · expected Jun 2027</div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad">
+              <div class="card">
+                <div class="row between"><div class="lbl" style="margin:0">On-time confidence</div><span class="tag open">On track</span></div>
+                <div class="big" style="margin:6px 0 2px">69% complete</div>
+                <div class="bar"><i style="width:69%"></i></div>
+                <div class="muted" style="margin-top:8px">240 / 360 credits · 3 required courses remaining</div>
+              </div>
+              <div class="lbl">Required to graduate</div>
+              <div class="card row between"><div><h4 class="cn">Machine Learning Foundations</h4><div class="muted">Enrolled · Spring 2026</div></div><span class="tag open">✓ Secured</span></div>
+              <div class="card row between"><div><h4 class="cn">Capstone Project</h4><div class="muted">Seat reserved for final year</div></div><span class="tag guar">Guaranteed</span></div>
+              <div class="card row between" style="border-color:var(--amber)"><div><h4 class="cn">Statistics III</h4><div class="muted">Offered next term — plan ahead</div></div><span class="tag match">Plan</span></div>
+              <div class="fair row" style="margin-top:6px"><span class="ic">🛡️</span><div class="muted" style="color:var(--green-900)">Required courses get <b>reserved seats</b> and priority weighting, so you're never blocked from graduating by a sold-out class.</div></div>
+            </div></div>
+            <div class="botnav" data-nav>
+              <button data-go="home"><span class="gi">⌂</span>Home</button>
+              <button data-go="browse"><span class="gi">🔍</span>Browse</button>
+              <button data-go="path"><span class="gi">🎯</span>Path</button>
+              <button class="on" data-go="grad"><span class="gi">🎓</span>Progress</button>
+              <button data-go="alerts"><span class="gi">🔔</span>Alerts</button>
+            </div>
+          </section>
+
+          <!-- 9 ALERTS -->
+          <section class="screen" data-s="alerts">
+            <div class="statusbar"><span>9:41</span><div class="dots"><span></span><span></span><span></span> ▮</div></div>
+            <div class="apphdr"><div><div class="ttl">Waitlist &amp; alerts</div><div class="sub">Auto-managed for you</div></div><div class="avatar">K</div></div>
+            <div class="body"><div class="pad">
+              <div class="card" style="border-left:4px solid var(--green-500)">
+                <div class="row between"><h4 class="cn">🎉 Seat opened</h4><span class="tag open">Action ready</span></div>
+                <div class="muted" style="margin:6px 0 11px">A seat opened in <b>Advanced Econometrics</b>. Your demand score put you at <b>#1 of 31</b> — claim within 12h or it cascades to the next student.</div>
+                <div class="row" style="gap:8px"><button class="btn sm" style="flex:1">Auto-claim ✓</button><button class="btn sm alt" style="flex:1">Decline</button></div>
+              </div>
+              <div class="lbl">Your waitlists</div>
+              <div class="card row between"><div><h4 class="cn">Machine Learning</h4><div class="muted">Resolved → enrolled</div></div><span class="tag open">Done</span></div>
+              <div class="card row between"><div><h4 class="cn">Sustainability Economics</h4><div class="muted">Position #2 of 14 · by demand score</div></div><span class="tag match">Waiting</span></div>
+              <div class="lbl">Swap requests</div>
+              <div class="card row between"><div><h4 class="cn">Swap: Tue lab → Thu lab</h4><div class="muted">Matching you with a partner…</div></div><span class="tag guar">Pending</span></div>
+              <div class="fair row" style="margin-top:6px"><span class="ic">🔔</span><div class="muted" style="color:var(--green-900)">Alerts + auto-claim mean you don't have to <b>refresh and race</b>. The system watches for openings and offers them in fair order.</div></div>
+            </div></div>
+            <div class="botnav" data-nav>
+              <button data-go="home"><span class="gi">⌂</span>Home</button>
+              <button data-go="browse"><span class="gi">🔍</span>Browse</button>
+              <button data-go="path"><span class="gi">🎯</span>Path</button>
+              <button data-go="grad"><span class="gi">🎓</span>Progress</button>
+              <button class="on" data-go="alerts"><span class="gi">🔔</span>Alerts</button>
+            </div>
+          </section>
+
+        </div>
+      </div>
+      <div class="hint">Tap cards, buttons &amp; the bottom nav inside the phone to explore the flow.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const NOTES = {
+  login:{kch:'Onboarding · 1',h:'Sign in',role:'Single university sign-on',body:'A frictionless entry point using existing student credentials. The tagline sets the product promise immediately: registration decided <b>by design, not by luck</b>.',ui:['University SSO — no new account to manage','Brand tagline frames the fairness mission','One primary action keeps the first screen calm'],solves:'<b>Foundation</b> — establishes identity so the system can apply <b>need-based weighting</b> (credits, year, degree requirements) later.'},
+  path:{kch:'Onboarding · 2',h:'Set my academic path',role:'Captures the student\'s goal once',body:'The student declares their goal track. This single input powers recommendations, requirement flags, and — crucially — seat-priority weighting throughout the app.',ui:['Goal tracks are selectable and stackable','Active path is visually confirmed','Inline note explains goals raise seat priority'],solves:'Tackles <b>Insight 3 — Academic Misalignment</b>. HMW help students pursue courses aligned with their goals? Answer: capture the goal up front and let it drive everything.'},
+  process:{kch:'Onboarding · 3',h:'How registration works',role:'The fair pipeline, explained',body:'A 5-step pipeline replaces the click-race: submit a wishlist → the university sizes classes to real demand → seats are provisionally assigned by <b>demand score</b> → students confirm within 24h → freed seats cascade down the waitlist by score until the window closes. <i>(Added from your team\'s process suggestion.)</i>',ui:['Numbered phase timeline students can follow','Plain-language explanation of demand-based slots','Sets expectations for the 24h confirm step'],solves:'<b>Insight 1 (speed)</b> + <b>Insight 2 (anxiety)</b>. Making the whole mechanism transparent removes the fear of an opaque, speed-driven scramble.'},
+  home:{kch:'Core loop',h:'Home dashboard',role:'The calm command centre',body:'The dashboard leads with the registration <b>window countdown</b> and an explicit reassurance that submission order doesn\'t affect odds — defusing the panic of a fixed opening time.',ui:['Window timer + "order does not matter" message','Graduation progress ring with seats guaranteed','Goal-aligned recommendations & live alert surfaced'],solves:'Hits all three insights at a glance: <b>speed anxiety</b> removed by the window model, <b>graduation anxiety</b> eased by the progress ring, <b>alignment</b> via recommendations.'},
+  browse:{kch:'Core loop',h:'Browse courses',role:'Goal-aware course discovery',body:'Every course carries a <b>% match</b> to the student\'s path, a requirement flag, and an honest seat-demand status. Relevant courses rise; irrelevant ones are visibly de-prioritised.',ui:['Match score ranks by goal relevance','"Required for your degree" badges','Seat status is transparent (open / high demand)'],solves:'<b>Insight 3 — Academic Misalignment.</b> Students see meaningful, goal-fit options first instead of scrambling for whatever is left.'},
+  detail:{kch:'Core loop',h:'Course detail',role:'Transparency before you commit',body:'Shows the live <b>waitlist count</b>, the student\'s personal <b>demand score</b> (with a link to the full breakdown), and a new <b>difficulty &amp; student-feedback</b> block so learners can judge a course before committing. <i>(Difficulty/feedback &amp; waitlist count added from your suggestions.)</i>',ui:['Waitlist count + demand score with "see breakdown"','Difficulty rating and real student reviews','Add-to-wishlist action; rate after completion'],solves:'<b>Insight 1 (speed)</b> and <b>Insight 3 (alignment)</b>. Open allocation rules end the refresh-race; ratings help students pick courses that genuinely fit.'},
+  demand:{kch:'Core loop · 7',h:'Your demand score',role:'The fairness engine, made visible',body:'Breaks the 100-point <b>demand score</b> into its five published factors — graduation urgency (40), prerequisite importance (25), wishlist rank (15), academic progress (15), study-plan alignment (5). The same formula applies to everyone and sets waitlist order. <i>(Built directly from your team\'s scoring rubric.)</i>',ui:['Five weighted criteria with per-factor points','Progress bars show how each factor scored','Note that the score is identical for all students'],solves:'<b>Insight 1 — Inequity of Speed.</b> An auditable, need-based score is the concrete answer to "allocate by need, not speed" — and it makes the waitlist queue trustworthy.'},
+  register:{kch:'Fair registration · 8',h:'Build your wishlist',role:'The core anti-speed mechanic',body:'Instead of racing to click "enrol", the student submits a <b>ranked wishlist</b> any time during the window. A backup slot guarantees they won\'t end with zero courses.',ui:['Drag-to-rank wishlist, editable until window close','"Submit early or late — same odds" reassurance','Backup choice protects the graduation timeline'],solves:'<b>Insight 1 (speed)</b> + <b>Insight 2 (graduation anxiety)</b>. Wishlist allocation removes the speed advantage; the backup mechanic guarantees a safety net.'},
+  result:{kch:'Fair registration · 9',h:'Provisional allocation',role:'Demand-based slots, then confirm',body:'After the window closes, seats are <b>provisionally assigned by demand score</b> with a <b>24h confirm</b> window. Unconfirmed or dropped seats cascade fairly to the next student. <i>(Provisional-slot + 24h-confirm flow added from your process suggestion.)</i>',ui:['"Slot held" items with their demand scores','24h confirm countdown + edit option','Waitlist position shown as "by demand score"'],solves:'Operationalises <b>Insight 1</b>: a concrete, auditable allocation + cascade. The 24h confirm is paired with auto-cascade so missing it never strands a seat unfairly.'},
+  confirm:{kch:'Fair registration · 10',h:'Classes confirmed',role:'Locked in',body:'Confirmation locks the held seats and reassures the student their graduation stays on track, with auto-claim continuing on any remaining waitlists by score — no monitoring required.',ui:['Confirmed classes listed clearly','Graduation-on-track reassurance','Auto-claim continues by demand score'],solves:'Completes the fair pipeline and reinforces <b>Insight 2</b> by tying the confirmed outcome to on-time graduation.'},
+  grad:{kch:'Stay in control',h:'Graduation tracker',role:'Certainty about finishing on time',body:'A live degree audit shows credits, an on-time confidence status, and — the key feature — <b>reserved/guaranteed seats</b> for required courses so a sold-out class can never block graduation.',ui:['On-time confidence + credit progress bar','Required courses flagged Secured / Guaranteed / Plan','Forward-planning prompts for future terms'],solves:'<b>Insight 2 — Graduation Anxiety.</b> HMW help students feel in control of graduating on time? Answer: guarantee required seats and make progress visible.'},
+  alerts:{kch:'Stay in control',h:'Waitlist & alerts',role:'No more refresh-and-race',body:'Smart waitlists, auto-claim, and swap matching mean the system watches for openings and offers them in <b>fair queue order</b> — the student never has to sit refreshing a page.',ui:['Seat-opened alert with fair claim window','Live waitlist positions & swap matching','Auto-claim option removes the need to monitor'],solves:'Reinforces <b>Insight 1</b>: openings are distributed by fair position and timed claims, not by who happens to be watching fastest.'}
+};
+const order=['login','path','process','home','browse','detail','demand','register','result','confirm','grad','alerts'];
+const port=document.getElementById('port');
+const notes=document.getElementById('notes');
+let cur='login';
+
+/* ---- Course data (fixes per-course detail) ---- */
+const COURSES={
+  ml:{name:'Machine Learning Foundations',code:'CS-3041 · 15 credits · Prof. Adeyemi · Tue/Thu 10:00',match:'96% match',required:true,
+      why:'Directly advances your <b>Data &amp; Analytics</b> path and clears a core requirement. Recommended priority: <b>High</b>.',
+      seats:32,wait:27,fill:84,score:92,odds:'High',rating:'4.6',reviews:128,diff:'3.4',
+      rv:[['Year 3 · took Spring 2025','★★★★☆','Heavy maths early on but the labs are great. Start the coursework early.'],
+          ['Year 2 · took Autumn 2024','★★★★★','Best-taught module of my degree. Manageable if you keep up weekly.']],
+      desc:'Supervised &amp; unsupervised learning, model evaluation, and a capstone project. Assumes intro statistics.',
+      factors:[['1 · Graduation urgency','Needed to graduate this year',40,40],['2 · Prerequisite importance','Unlocks 2+ future courses',25,25],['3 · Wishlist ranking','Ranked #1 in your wishlist',15,15],['4 · Academic progress','18 credits left (≤ 20)',15,15],['5 · Study-plan alignment','1 semester earlier than advised',3,5]]},
+  dv:{name:'Data Visualisation &amp; Storytelling',code:'DA-2210 · 15 credits · Dr. Lindqvist · Mon/Wed 14:00',match:'91% match',required:false,
+      why:'Strongly aligned with your <b>Data &amp; Analytics</b> path. Recommended priority: <b>Medium–High</b>.',
+      seats:40,wait:6,fill:55,score:71,odds:'High',rating:'4.8',reviews:96,diff:'2.6',
+      rv:[['Year 2 · took Spring 2025','★★★★★','Genuinely fun — lots of hands-on dashboards, light on maths.'],
+          ['Year 3 · took Autumn 2024','★★★★☆','Great for your portfolio. Weekly vizzes add up, don\'t fall behind.']],
+      desc:'Visual encoding, narrative dashboards, and tools like D3 and Tableau. No heavy prerequisites.',
+      factors:[['1 · Graduation urgency','Helps graduation next year',25,40],['2 · Prerequisite importance','Prerequisite of 1 course',15,25],['3 · Wishlist ranking','Ranked #2 in your wishlist',12,15],['4 · Academic progress','18 credits left (≤ 20)',15,15],['5 · Study-plan alignment','±1 semester from advised',4,5]]},
+  ec:{name:'Advanced Econometrics',code:'EC-3300 · 15 credits · Dr. Faraj · Tue/Fri 09:00',match:'88% match',required:false,
+      why:'Relevant to your path and a strong analytical elective. Recommended priority: <b>Medium</b>.',
+      seats:24,wait:31,fill:92,score:64,odds:'Medium',rating:'4.1',reviews:74,diff:'4.5',
+      rv:[['Year 3 · took Spring 2025','★★★★☆','Tough but rewarding. Expect serious problem sets every week.'],
+          ['Year 4 · took Autumn 2024','★★★☆☆','Brilliant lecturer, steep pace. Don\'t take it alongside other hard modules.']],
+      desc:'Panel data, instrumental variables, and causal inference. Assumes statistics and intro econometrics.',
+      factors:[['1 · Graduation urgency','Helps graduation next year',25,40],['2 · Prerequisite importance','Prerequisite of 1 course',15,25],['3 · Wishlist ranking','Ranked #3 in your wishlist',9,15],['4 · Academic progress','18 credits left (≤ 20)',15,15],['5 · Study-plan alignment','More than 1 semester off',0,5]]},
+  mk:{name:'Intro to Marketing',code:'MK-1100 · 15 credits · Dr. Owusu · Thu 11:00',match:'31% match',required:false,
+      why:'Low relevance to your <b>Data &amp; Analytics</b> goals — consider only as a free elective.',
+      seats:120,wait:2,fill:30,score:18,odds:'Low',rating:'4.0',reviews:210,diff:'2.0',
+      rv:[['Year 1 · took Spring 2025','★★★★☆','Easy, broad intro. Fine as a filler but not very technical.'],
+          ['Year 2 · took Autumn 2024','★★★★☆','Light workload. Good if you want a relaxed elective.']],
+      desc:'Marketing principles, segmentation, and the marketing mix. No prerequisites.',
+      factors:[['1 · Graduation urgency','Not needed to graduate',0,40],['2 · Prerequisite importance','Not a prerequisite',0,25],['3 · Wishlist ranking','Not on your wishlist',0,15],['4 · Academic progress','18 credits left (≤ 20)',15,15],['5 · Study-plan alignment','More than 1 semester off',3,5]]}
+};
+let currentCourse='ml';
+
+function renderDetail(k){
+  const c=COURSES[k]||COURSES.ml;
+  const dots=[1,2,3,4,5].map(i=>'<i class="'+(i<=Math.round(parseFloat(c.diff))?'on':'')+'"></i>').join('');
+  const revs=c.rv.map(r=>`<div class="review"><div class="rh"><span class="muted" style="font-weight:700">${r[0]}</span><span class="stars">${r[1]}</span></div><div class="muted">"${r[2]}"</div></div>`).join('');
+  const topTag=c.required?'<span class="tag req">★ Required for your degree</span>':`<span class="tag match">${c.match}</span>`;
+  document.getElementById('detailBody').innerHTML=`
+    ${topTag}
+    <h2 class="big" style="margin:8px 0 2px">${c.name}</h2>
+    <div class="muted" style="margin-bottom:12px">${c.code}</div>
+    <div class="card" style="border-color:var(--amber);background:var(--amber-bg)">
+      <div class="row between"><h4 class="cn" style="color:var(--amber)">Why you're seeing this</h4><span class="tag match">${c.match}</span></div>
+      <div class="muted" style="color:#7a5a18">${c.why}</div>
+    </div>
+    <div class="fair" style="margin-bottom:13px">
+      <div class="row between" style="margin-bottom:6px"><h4 class="cn" style="color:var(--green-900)">How seats are allocated</h4><span class="tag open">By demand</span></div>
+      <div class="muted" style="color:var(--green-900)">${c.seats} seats · <b>${c.wait} on the waitlist</b>. Seats are assigned by each student's <b>demand score</b> after the window closes — by graduation need &amp; credits, <b>never by who clicks first</b>.</div>
+      <div class="bar" style="margin-top:10px"><i style="width:${c.fill}%"></i></div>
+      <div class="row between" style="margin-top:6px"><span class="muted" style="color:var(--green-700)">Your demand score: <b>${c.score}/100</b> · odds <b>${c.odds}</b></span><span class="link" data-go="demand">See breakdown ›</span></div>
+    </div>
+    <div class="card flat" style="border:1px solid var(--line);margin-bottom:13px">
+      <div class="row between" style="margin-bottom:7px"><h4 class="cn">Difficulty &amp; student feedback</h4><span class="muted">★ ${c.rating} · ${c.reviews} reviews</span></div>
+      <div class="row between" style="margin-bottom:9px"><span class="muted">Difficulty ${c.diff} / 5</span><span class="dots5">${dots}</span></div>
+      ${revs}
+      <div class="muted" style="font-size:11px">You can rate difficulty &amp; leave feedback once you complete the course.</div>
+    </div>
+    <div class="lbl">In this course</div>
+    <p class="muted" style="margin-bottom:16px">${c.desc}</p>
+    <button class="btn" data-go="register">Add to wishlist</button>
+    <button class="btn alt" style="margin-top:9px" data-go="browse">Back to results</button>`;
+}
+function renderDemand(k){
+  const c=COURSES[k]||COURSES.ml;
+  document.getElementById('demandSub').innerHTML=c.name;
+  document.getElementById('demandScore').textContent=c.score+' / 100';
+  document.getElementById('demandFactors').innerHTML=c.factors.map((f,i)=>`<div class="srow"${i===c.factors.length-1?' style="margin-bottom:0"':''}><div class="sl"><div class="nm">${f[0]}</div><div class="ds">${f[1]}</div><div class="sb"><i style="width:${Math.round(f[2]/f[3]*100)}%"></i></div></div><div class="sp">${f[2]}/${f[3]}</div></div>`).join('');
+}
+let WISH=[
+  {name:'Machine Learning Foundations',meta:'<span class="tag req" style="font-size:9px">Required</span> · odds: High'},
+  {name:'Data Visualisation',meta:'Aligned · odds: High'},
+  {name:'Advanced Econometrics',meta:'High demand · odds: Medium'}
+];
+function renderWish(){
+  document.getElementById('wishlistList').innerHTML=WISH.map((w,i)=>{
+    const up=i===0?'dis':'', dn=i===WISH.length-1?'dis':'';
+    return `<div class="pref"><span class="rank">${i+1}</span><div style="flex:1"><h4 class="cn" style="font-size:14px">${w.name}</h4><div class="muted">${w.meta}</div></div><div class="ar2"><span class="${up}" data-mv="${i}:-1">▲</span><span class="${dn}" data-mv="${i}:1">▼</span></div></div>`;
+  }).join('');
+}
+function moveWish(i,d){const j=i+d; if(j<0||j>=WISH.length)return; const t=WISH[i];WISH[i]=WISH[j];WISH[j]=t; renderWish();}
+function render(s){
+  cur=s;
+  if(s==='detail') renderDetail(currentCourse);
+  if(s==='demand') renderDemand(currentCourse);
+  document.querySelectorAll('.screen').forEach(el=>el.classList.toggle('show',el.dataset.s===s));
+  document.querySelectorAll('#flowmap button').forEach(b=>b.classList.toggle('active',b.dataset.s===s));
+  if(notes){
+    const n=NOTES[s];
+    const i=order.indexOf(s);
+    notes.innerHTML=`<span class="kch">${n.kch}</span><h2>${n.h}</h2><div class="role">${n.role}</div>
+      <p>${n.body}</p><h5>Key UI elements</h5><ul>${n.ui.map(x=>`<li>${x}</li>`).join('')}</ul>
+      <h5>What it solves</h5><div class="solves">${n.solves}</div>
+      <div class="navbtns"><button ${i===0?'disabled style=opacity:.4':''} onclick="step(-1)">‹ Prev</button>
+      <button class="prim" ${i===order.length-1?'disabled style=opacity:.4':''} onclick="step(1)">Next ›</button></div>
+      <p class="hint">Screen ${i+1} of ${order.length}</p>`;
+  }
+  port.scrollTop=0;
+  const b=port.querySelector('.screen.show .body'); if(b) b.scrollTop=0;
+}
+function step(d){const i=order.indexOf(cur)+d; if(i>=0&&i<order.length) render(order[i]);}
+document.querySelectorAll('#flowmap button').forEach(b=>b.onclick=()=>render(b.dataset.s));
+document.addEventListener('click',e=>{
+  const mv=e.target.closest('[data-mv]');
+  if(mv){e.stopPropagation(); const p=mv.dataset.mv.split(':'); moveWish(+p[0],+p[1]); return;}
+  const cc=e.target.closest('[data-course]');
+  if(cc){e.stopPropagation(); currentCourse=cc.dataset.course; render('detail'); return;}
+  const t=e.target.closest('[data-go]'); if(t){e.stopPropagation(); render(t.dataset.go);}
+});
+renderWish();
+render('login');
+</script>
+</body>
+</html>
